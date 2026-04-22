@@ -6,12 +6,12 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/gitops-app
   IMG_NAME: haseef-ahamed/gitops-app
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     permissions:
       contents: write
       packages: write
@@ -52,12 +52,12 @@ jobs:
             ghcr.io/${{ env.IMG_NAME }}:${{ steps.tag.outputs.IMAGE_TAG }}
             ghcr.io/${{ env.IMG_NAME }}:latest
 
-      # Step 7: Update dev manifest with new image tag 
+      # Step 7: Update dev manifest with new image tag
       - name: Update dev manifest
         run: |
           git clone https://x-access-token:${{ secrets.MANIFEST_TOKEN }}@github.com/${{ github.repository_owner }}/gitops-manifests.git
           cd gitops-manifests
-          sed -i "s|image: ghcr.io/.*/gitops-app:.*|image: ghcr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.IMAGE_TAG }}|g" dev/deployment.yaml
+          sed -i "s|image: ghcr.io/.*/gitops-app:.*|image: ghcr.io/${{ env.IMG_NAME }}:${{ steps.tag.outputs.IMAGE_TAG }}|g" dev/deployment.yaml
           git config user.email "ci@gitops.local"
           git config user.name "CI Bot"
           git add dev/deployment.yaml
