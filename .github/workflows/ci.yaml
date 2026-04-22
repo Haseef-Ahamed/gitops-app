@@ -51,7 +51,7 @@ jobs:
             ghcr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.IMAGE_TAG }}
             ghcr.io/${{ env.IMAGE_NAME }}:latest
 
-      # Step 7: Update dev manifest with new image tag
+      # Step 7: Update dev manifest with new image tag 
       - name: Update dev manifest
         run: |
           git clone https://x-access-token:${{ secrets.MANIFEST_TOKEN }}@github.com/${{ github.repository_owner }}/gitops-manifests.git
