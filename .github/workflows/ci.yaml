@@ -58,9 +58,9 @@ jobs:
         run: |
           git clone https://x-access-token:${{ secrets.MANIFEST_TOKEN }}@github.com/${{ github.repository_owner }}/gitops-manifests.git
           cd gitops-manifests
-          sed -i "s|image: ghcr.io/.*/gitops-app:.*|image: ghcr.io/${{ env.IMG_NAME }}:${{ steps.tag.outputs.IMAGE_TAG }}|g" dev/deployment.yaml
+          sed -i "s|image: ghcr.io/.*/gitops-app:.*|image: ghcr.io/${{ env.IMG_NAME }}:${{ steps.tag.outputs.IMAGE_TAG }}|g" dev/deployment.yml
           git config user.email "ci@gitops.local"
           git config user.name "CI Bot"
-          git add dev/deployment.yaml
+          git add dev/deployment.yml
           git commit -m "ci: update dev image to ${{ steps.tag.outputs.IMAGE_TAG }}"
           git push
