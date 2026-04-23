@@ -35,7 +35,7 @@ jobs:
         with:
           registry: ghcr.io
           username: haseef-ahamed
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.MANIFEST_TOKEN }}
 
       # Step 5: Generate image tag from commit SHA
       - name: Generate image tag
