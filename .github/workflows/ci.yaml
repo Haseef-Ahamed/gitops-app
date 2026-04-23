@@ -54,20 +54,21 @@ jobs:
             ghcr.io/${{ env.IMG_NAME }}:${{ steps.tag.outputs.IMAGE_TAG }}
             ghcr.io/${{ env.IMG_NAME }}:latest
 
-      - name: Update dev manifest
+      - name: Update dev manifest and sync staging version
         run: |
           git clone https://x-access-token:${{ secrets.MANIFEST_TOKEN }}@github.com/${{ github.repository_owner }}/gitops-manifests.git
           cd gitops-manifests
 
-          # Update image tag
+          # ── DEV: update image tag + APP_VERSION ──────────────
           sed -i "s|image: ghcr.io/.*/gitops-app:.*|image: ghcr.io/${{ env.IMG_NAME }}:${{ steps.tag.outputs.IMAGE_TAG }}|g" dev/deployment.yml
-
-          # Update APP_VERSION (finds APP_VERSION line, then updates the next line)
           sed -i "/name: APP_VERSION/{n;s|value:.*|value: \"${{ steps.version.outputs.APP_VERSION }}\"|}" dev/deployment.yml
+
+          # ── STAGING: update APP_VERSION only (image stays manual) ──
+          sed -i "/name: APP_VERSION/{n;s|value:.*|value: \"${{ steps.version.outputs.APP_VERSION }}\"|}" staging/deployment.yml
 
           git config user.email "ci@gitops.local"
           git config user.name "CI Bot"
-          git add dev/deployment.yml
+          git add dev/deployment.yml staging/deployment.yml
           git diff --staged
-          git commit -m "ci: update dev image=${{ steps.tag.outputs.IMAGE_TAG }} version=${{ steps.version.outputs.APP_VERSION }}"
+          git commit -m "ci: dev+staging version=${{ steps.version.outputs.APP_VERSION }} dev-image=${{ steps.tag.outputs.IMAGE_TAG }}"
           git push
