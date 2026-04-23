@@ -34,7 +34,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: haseef-ahamed
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # Step 5: Generate image tag from commit SHA
