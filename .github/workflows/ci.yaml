@@ -56,11 +56,20 @@ jobs:
       # Step 7: Update dev manifest with new image tag
       - name: Update dev manifest
         run: |
+          # Read version from package.json
+          APP_VERSION=$(node -p "require('./package.json').version")
+
           git clone https://x-access-token:${{ secrets.MANIFEST_TOKEN }}@github.com/${{ github.repository_owner }}/gitops-manifests.git
           cd gitops-manifests
+
+          # Update image tag
           sed -i "s|image: ghcr.io/.*/gitops-app:.*|image: ghcr.io/${{ env.IMG_NAME }}:${{ steps.tag.outputs.IMAGE_TAG }}|g" dev/deployment.yml
+
+          # Update APP_VERSION env var
+          sed -i "s|value: \"v.*\"  # APP_VERSION|value: \"v${APP_VERSION}\"  # APP_VERSION|g" dev/deployment.yml
+
           git config user.email "ci@gitops.local"
           git config user.name "CI Bot"
           git add dev/deployment.yml
-          git commit -m "ci: update dev image to ${{ steps.tag.outputs.IMAGE_TAG }}"
+           git commit -m "ci: update dev to image ${{ steps.tag.outputs.IMAGE_TAG }} version v${APP_VERSION}"
           git push
