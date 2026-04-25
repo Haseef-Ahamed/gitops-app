@@ -1,0 +1,56 @@
+name: Promote to Staging
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'    # triggers on tags like v1.0.0, v2.0.0, v3.0.0
+
+env:
+  IMG_NAME: haseef-ahamed/gitops-app
+
+jobs:
+  promote:
+    name: Promote to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout manifests
+        run: |
+          git clone https://x-access-token:${{ secrets.MANIFEST_TOKEN }}@github.com/${{ github.repository_owner }}/gitops-manifests.git
+
+      - name: Read current dev state
+        id: dev
+        run: |
+          cd gitops-manifests
+          DEV_IMAGE=$(grep "image:" dev/deployment.yml | awk '{print $2}')
+          DEV_VERSION=$(grep -A1 "name: APP_VERSION" dev/deployment.yml \
+            | grep value | awk '{print $2}' | tr -d '"')
+          echo "DEV_IMAGE=$DEV_IMAGE" >> $GITHUB_OUTPUT
+          echo "DEV_VERSION=$DEV_VERSION" >> $GITHUB_OUTPUT
+          echo "Dev image:   $DEV_IMAGE"
+          echo "Dev version: $DEV_VERSION"
+
+      - name: Promote dev image to staging
+        run: |
+          cd gitops-manifests
+
+          # Update staging image to match dev
+          sed -i "s|image: ghcr.io/.*/gitops-app:.*|image: ${{ steps.dev.outputs.DEV_IMAGE }}|g" staging/deployment.yml
+
+          # Update staging APP_VERSION
+          sed -i "/name: APP_VERSION/{n;s|value:.*|value: \"${{ steps.dev.outputs.DEV_VERSION }}\"|}" staging/deployment.yml
+
+          git config user.email "ci@gitops.local"
+          git config user.name "CI Bot"
+          git add staging/deployment.yml
+          git diff --staged
+          git commit -m "promote(staging): image=${{ steps.dev.outputs.DEV_IMAGE }} version=${{ steps.dev.outputs.DEV_VERSION }} tag=${{ github.ref_name }}"
+          git push
+
+      - name: Summary
+        run: |
+          echo "✅ Promoted to STAGING"
+          echo "   Image:   ${{ steps.dev.outputs.DEV_IMAGE }}"
+          echo "   Version: ${{ steps.dev.outputs.DEV_VERSION }}"
+          echo "   Tag:     ${{ github.ref_name }}"
