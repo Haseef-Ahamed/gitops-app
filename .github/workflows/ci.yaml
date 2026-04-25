@@ -58,7 +58,8 @@ jobs:
 
       - name: Generate image tag
         id: tag
-        run: echo "IMAGE_TAG=sha-$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
+        run: |
+          echo "IMAGE_TAG=sha-$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
 
       - name: Read version from package.json
         id: version
@@ -78,7 +79,7 @@ jobs:
             ghcr.io/${{ env.IMG_NAME }}:latest
 
   # ══════════════════════════════════════════
-  # JOB 3: Deploy to Dev ONLY
+  # JOB 3: Deploy to Dev (main branch)
   # ══════════════════════════════════════════
   deploy-dev:
     name: Deploy to Dev
@@ -87,15 +88,16 @@ jobs:
     environment: dev
 
     steps:
-      - name: Checkout manifests repo
+      - name: Update dev manifest on main branch
         run: |
           git clone https://x-access-token:${{ secrets.MANIFEST_TOKEN }}@github.com/${{ github.repository_owner }}/gitops-manifests.git
           cd gitops-manifests
 
-          # Update image tag — DEV ONLY
-          sed -i "s|image: ghcr.io/.*/gitops-app:.*|image: ghcr.io/${{ env.IMG_NAME }}:${{ needs.build.outputs.image_tag }}|g" dev/deployment.yml
+          # Always work on main branch for dev
+          git checkout main
 
-          # Update APP_VERSION — DEV ONLY
+          # Update image + version in dev folder
+          sed -i "s|image: ghcr.io/.*/gitops-app:.*|image: ghcr.io/${{ env.IMG_NAME }}:${{ needs.build.outputs.image_tag }}|g" dev/deployment.yml
           sed -i "/name: APP_VERSION/{n;s|value:.*|value: \"${{ needs.build.outputs.app_version }}\"|}" dev/deployment.yml
 
           git config user.email "ci@gitops.local"
@@ -103,12 +105,16 @@ jobs:
           git add dev/deployment.yml
           git diff --staged
           git commit -m "ci(dev): image=${{ needs.build.outputs.image_tag }} version=${{ needs.build.outputs.app_version }}"
-          git push
+          git push origin main
 
-      - name: Summary
+      - name: Deployment Summary
         run: |
-          echo "✅ Deployed to DEV"
+          echo "════════════════════════════════════"
+          echo "✅ DEV deployment complete"
           echo "   Image:   ${{ needs.build.outputs.image_tag }}"
           echo "   Version: ${{ needs.build.outputs.app_version }}"
-          echo ""
-          echo "⏳ Staging: run ./promote.sh when dev is verified"
+          echo "════════════════════════════════════"
+          echo "📋 Next steps:"
+          echo "   1. Test: curl http://localhost:3000/version"
+          echo "   2. When ready: ./promote.sh"
+          echo "════════════════════════════════════"
