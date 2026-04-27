@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
-const VERSION = process.env.APP_VERSION || 'v9.0.0';
+const VERSION = process.env.APP_VERSION || 'v10.0.0';
 
 // Health check endpoint
 app.get('/health', (req, res) => {
