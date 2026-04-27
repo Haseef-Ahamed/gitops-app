@@ -1,6 +1,6 @@
 {
   "name": "gitops-app",
-  "version": "10.0.0",
+  "version": "11.0.0",
   "description": "Simple API for GitOps demo",
   "main": "src/app.js",
   "scripts": {
